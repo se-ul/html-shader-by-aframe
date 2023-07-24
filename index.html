@@ -1,0 +1,165 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="initial-scale=1.0,user-scalable=no,maximum-scale=1,width=device-width"
+    />
+    <title>Simplicity</title>
+    <script src="https://aframe.io/releases/1.1.0/aframe.min.js"></script>
+    <script src="./aframe-html-shader.min.js"></script>
+    <style type="text/css">
+      #htmlTarget {
+        position: absolute;
+        z-index: 1;
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+        position: fixed;
+        top: 0;
+      }
+      #target {
+        width: 512px;
+        height: 256px;
+        position: absolute;
+        background: rgba(255, 255, 0, 0.3);
+        overflow: auto;
+      }
+      #target ul {
+        display: flex;
+      }
+      #target ul li {
+        display: flex;
+      }
+      #scene {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        width: 50%;
+        height: 50%;
+      }
+    </style>
+    <script>
+      const axis = 'x' // 'x' | 'y'
+      const strength = "1.0" // float (소숫점 꼭 써줘야 함)
+      const width = 2
+      const height = 2
+
+      // 왜곡 포스트 프로세싱
+      AFRAME.registerComponent("curved", {
+        init: function () {
+          let rtWidth = 1024;
+          let rtHeight = 1024;
+
+          this.renderTarget0 = new THREE.WebGLRenderTarget(rtWidth, rtHeight, {});
+
+          let texture = this.renderTarget0.texture;
+
+          let postMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+              tex: {type: "t", value: texture},
+              viewportSizes: [800.0, 800.0],
+            },
+
+            vertexShader: `
+              #define PI 3.1415926535897932384626433832795
+
+              precision highp float;
+              precision highp int;
+
+              uniform float direction;
+              uniform float strength;
+              uniform vec2 viewportSizes;
+
+              varying vec2 vUv;
+              void main() 
+              {
+                  vUv = uv;
+                  vec4 newPosition = modelViewMatrix * vec4(position, 1.0);
+                  newPosition.z += sin((uv.${axis} * 2.0) * PI + PI / 2.0) * ${strength};
+                  gl_Position = projectionMatrix * newPosition;
+              }
+            `,
+            fragmentShader: `
+              varying vec2 vUv;
+              uniform sampler2D tex;
+              void main() 
+              {
+                  gl_FragColor = texture2D(tex, vUv);
+              }
+            `
+          });
+
+          // separate scene #1 for texture post processing
+          const quad = new THREE.Mesh(new THREE.PlaneGeometry(width, height, 128, 128), postMaterial);
+          this.rtScene = new THREE.Scene();
+          this.rtScene.add(quad);
+          this.rtCamera = new THREE.PerspectiveCamera();
+          this.rtCamera.position.z = 0;
+        },
+
+        tick: function(t, dt) {
+          const renderer = this.el.sceneEl.renderer;
+
+          // apply post-processing effects to previously rendered target texture,
+          //   displayed on a quad, rendered to screen
+          renderer.setRenderTarget(null);
+          renderer.render(this.rtScene, this.rtCamera);
+          
+          // render scene onto a texture
+          renderer.setRenderTarget(this.renderTarget0); 
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <div id="scene">
+      <a-scene curved>
+        <a-plane
+        id="lettersEntity"
+        width="1"
+        height="1"
+        segments-width="100"
+        segments-height="100"
+        position="0 0 0"
+        material="shader: html; target: #target; transparent: true; ratio: width; fps: 300"
+        >
+        <!-- 프레임이 잘 안 나오면 윗 줄에서 fps 뒤의 숫자를 이리저리 바꿔보기  -->
+        </a-plane>
+        
+        <!-- 카메라 포지션 x y z. 세 번째 숫자 바꿔서 거리 조절 -->
+        <a-entity camera position="0 0 1"></a-entity>
+      </a-scene>
+    </div>
+
+    <!-- HTML to render as a material. -->
+    <div id="htmlTarget" class="hide">
+      <div id="target">
+        <!-- 여기에다 DOM 구현 -->
+        <ul>
+          <li>12345 12345 <img src="https://picsum.photos/id/237/200/300"/> </li> 
+          <li>12345 12345 <img src="https://picsum.photos/id/237/200/300"/> </li>
+          <li>12345 12345 <img src="https://picsum.photos/id/237/200/300"/> </li>
+          <li>12345 12345 <img src="https://picsum.photos/id/237/200/300"/> </li>
+          <li>12345 12345 <img src="https://picsum.photos/id/237/200/300"/> </li>
+          <li>12345 12345 <img src="https://picsum.photos/id/237/200/300"/> </li>
+          <li>12345 12345 <img src="https://picsum.photos/id/237/200/300"/> </li>
+          <li>12345 12345 <img src="https://picsum.photos/id/237/200/300"/> </li>
+          <li>12345 12345 <img src="https://picsum.photos/id/237/200/300"/> </li>
+          <li>12345 12345 <img src="https://picsum.photos/id/237/200/300"/> </li>
+          <li>12345 12345 <img src="https://picsum.photos/id/237/200/300"/> </li>
+          <li>12345 12345 <img src="https://picsum.photos/id/237/200/300"/> </li>
+          <li>12345 12345 <img src="https://picsum.photos/id/237/200/300"/> </li>
+          <li>12345 12345 <img src="https://picsum.photos/id/237/200/300"/> </li>
+          <li>12345 12345 <img src="https://picsum.photos/id/237/200/300"/> </li>
+          <li>12345 12345 <img src="https://picsum.photos/id/237/200/300"/> </li>
+          <li>12345 12345 <img src="https://picsum.photos/id/237/200/300"/> </li>
+          <li>12345 12345 <img src="https://picsum.photos/id/237/200/300"/> </li>
+          <li>12345 12345 <img src="https://picsum.photos/id/237/200/300"/> </li>
+          <li>12345 12345 <img src="https://picsum.photos/id/237/200/300"/> </li>
+          <li>12345 12345 <img src="https://picsum.photos/id/237/200/300"/> </li>
+        </ul>
+      </div>
+    </div>
+  </body>
+</html>
